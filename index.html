@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07130f">
+  <title>Brasileirão — Simulador</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #07130f;
+      --panel: #0e1c16;
+      --panel-soft: #13231b;
+      --line: #20342a;
+      --muted: #91a397;
+      --text: #f0f5f1;
+      --green: #b4f266;
+      --bright-green: #75d95a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 10% -15%, rgba(116, 199, 80, .14), transparent 35rem),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.5 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+
+    button, select, input { font: inherit; }
+    button, select { color: inherit; }
+
+    .shell { max-width: 1240px; margin: 0 auto; padding: 28px 32px 54px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 48px; }
+    .brand { display: flex; align-items: center; gap: 11px; font-size: 13px; font-weight: 800; letter-spacing: .12em; }
+    .brand-mark {
+      display: grid; place-items: center; width: 35px; height: 35px;
+      border: 1px solid rgba(180, 242, 102, .45); border-radius: 11px;
+      color: var(--green); background: rgba(180, 242, 102, .08); font-size: 18px;
+    }
+    .season { color: var(--muted); font-size: 13px; }
+    .eyebrow { color: var(--green); text-transform: uppercase; font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+    h1 { margin: 7px 0 8px; font-size: clamp(32px, 5vw, 48px); line-height: 1.08; letter-spacing: -.045em; }
+    .intro { max-width: 620px; margin: 0; color: var(--muted); font-size: 15px; }
+    .hero { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+    .hero-note { display: flex; align-items: center; gap: 9px; color: #c4d2c8; font-size: 12px; white-space: nowrap; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px rgba(180, 242, 102, .7); }
+
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 20px; align-items: start; }
+    .card { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: rgba(14, 28, 22, .94); }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+    .card-title { margin: 0; font-size: 16px; font-weight: 750; letter-spacing: -.02em; }
+    .card-subtitle { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .round-select {
+      min-width: 148px; padding: 9px 34px 9px 12px; border: 1px solid #304539; border-radius: 9px;
+      background: var(--panel-soft); font-size: 13px; outline: none;
+    }
+    .round-select:focus, input:focus { border-color: var(--green); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th { height: 39px; color: #84968a; font-size: 10px; font-weight: 750; letter-spacing: .08em; text-align: center; text-transform: uppercase; }
+    th:first-child, th:nth-child(2) { text-align: left; }
+    th:first-child { width: 46px; padding-left: 18px; }
+    th:nth-child(2) { min-width: 155px; }
+    td { height: 47px; border-top: 1px solid rgba(32, 52, 42, .72); color: #bdc9c0; font-size: 12px; text-align: center; }
+    td:first-child { padding-left: 18px; color: #809187; text-align: left; }
+    td:nth-child(2) { color: var(--text); text-align: left; }
+    th:last-child, td:last-child { padding-right: 17px; }
+    td.points { color: var(--text); font-weight: 800; }
+    tr.highlight td:nth-child(2) { font-weight: 700; }
+    .team-cell { display: flex; align-items: center; gap: 10px; }
+    .team-badge {
+      display: grid; flex: 0 0 27px; place-items: center; width: 27px; height: 27px;
+      border: 1px solid #31453a; border-radius: 8px; background: #192a20; color: #e3eedf;
+      font-size: 9px; font-weight: 850; letter-spacing: -.04em;
+    }
+    tr.zone-libertadores td:first-child { border-left: 3px solid #69c98b; padding-left: 15px; }
+    tr.zone-sulamericana td:first-child { border-left: 3px solid #e8c35e; padding-left: 15px; }
+    tr.zone-relegation td:first-child { border-left: 3px solid #db6e69; padding-left: 15px; }
+    .table-legend { display: flex; flex-wrap: wrap; gap: 16px; padding: 14px 20px 17px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 7px; }
+    .legend-mark { width: 7px; height: 7px; border-radius: 2px; background: #69c98b; }
+    .legend-mark.sul { background: #e8c35e; }
+    .legend-mark.relegation { background: #db6e69; }
+
+    .side { display: grid; gap: 18px; }
+    .matches-card { padding-bottom: 16px; }
+    .match-list { display: grid; gap: 0; max-height: 490px; overflow-y: auto; padding: 0 18px; }
+    .match { display: grid; grid-template-columns: minmax(0, 1fr) 86px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 62px; border-bottom: 1px solid rgba(32, 52, 42, .72); }
+    .match:last-child { border-bottom: 0; }
+    .match-team { overflow: hidden; color: #dce5de; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .match-team.away { text-align: right; }
+    .match-date { grid-column: 1 / -1; margin: 10px 0 -7px; color: var(--green); font-size: 10px; font-weight: 750; letter-spacing: .04em; }
+    .match.is-played .score { color: var(--green); font-size: 14px; font-weight: 800; }
+    .match.is-live .score { color: #f0c45e; font-size: 11px; font-weight: 800; }
+    .match-tag { grid-column: 1 / -1; margin: -7px 0 8px; color: var(--muted); font-size: 9px; text-align: center; }
+    .data-status { padding: 11px 20px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .data-status.error { color: #ffaaa3; }
+    .source-link { color: #a9bdad; text-decoration-color: #587362; text-underline-offset: 3px; }
+    .source-link:hover { color: var(--green); }
+    .score { display: flex; align-items: center; justify-content: center; gap: 5px; }
+    .score input {
+      width: 34px; height: 34px; border: 1px solid #304539; border-radius: 8px;
+      background: #09150f; color: var(--text); font-size: 14px; font-weight: 750; text-align: center; outline: none;
+      appearance: textfield;
+    }
+    .score input::-webkit-inner-spin-button, .score input::-webkit-outer-spin-button { margin: 0; appearance: none; }
+    .score-divider { color: #708176; font-size: 12px; }
+    .match-footer { display: flex; justify-content: space-between; padding: 8px 20px 0; color: var(--muted); font-size: 11px; }
+    .actions { display: grid; gap: 9px; padding: 18px; }
+    .button {
+      display: inline-flex; justify-content: center; align-items: center; gap: 8px; min-height: 42px;
+      padding: 10px 14px; border: 1px solid transparent; border-radius: 9px;
+      background: var(--green); color: #13200e; cursor: pointer; font-size: 12px; font-weight: 800;
+      transition: transform .15s, background .15s;
+    }
+    .button:hover { transform: translateY(-1px); background: #c5ff7b; }
+    .button.secondary { border-color: #304539; background: #14231b; color: #dce6df; }
+    .button.secondary:hover { background: #1b3024; }
+    .button.ghost { border-color: transparent; background: transparent; color: #9baa9f; }
+    .button.ghost:hover { background: #17241d; color: var(--text); }
+    .help { margin: 0; padding: 0 19px 2px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; border: 1px solid var(--line); border-radius: 14px; background: var(--line); overflow: hidden; }
+    .stat { min-width: 0; padding: 14px 13px; background: var(--panel); }
+    .stat-label { display: block; color: var(--muted); font-size: 10px; }
+    .stat-value { display: block; overflow: hidden; margin-top: 4px; color: var(--text); font-size: 14px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+    .stat-value.green { color: var(--green); }
+    .toast { position: fixed; right: 24px; bottom: 24px; z-index: 3; padding: 11px 16px; border: 1px solid #3c573f; border-radius: 10px; background: #16271b; color: var(--text); font-size: 12px; box-shadow: 0 8px 28px #0005; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; }
+      .shell { padding-right: 22px; padding-left: 22px; }
+      .card-head { padding-right: 16px; padding-left: 16px; }
+    }
+    @media (max-width: 720px) {
+      .shell { padding: 20px 15px 40px; }
+      .topbar { margin-bottom: 35px; }
+      .hero { display: block; margin-bottom: 22px; }
+      .hero-note { margin-top: 17px; }
+      .layout { grid-template-columns: 1fr; }
+      .side { grid-row: 1; }
+      .matches-card { display: grid; grid-template-columns: 1fr auto; align-items: start; }
+      .matches-card .card-head { grid-column: 1 / -1; }
+      .matches-card .match-list { padding: 0 12px; }
+      .matches-card .actions { align-content: center; width: 155px; padding: 10px 12px 10px 0; }
+      .matches-card .help, .matches-card .match-footer { grid-column: 1 / -1; }
+      .matches-card .match-footer { padding-bottom: 5px; }
+      .match { grid-template-columns: minmax(0, 1fr) 80px minmax(0, 1fr); }
+      .table-card .card-head { align-items: flex-start; }
+      th:nth-child(2) { min-width: 135px; }
+    }
+    @media (max-width: 430px) {
+      .season { font-size: 11px; }
+      .matches-card { grid-template-columns: 1fr; }
+      .matches-card .actions { grid-template-columns: 1fr 1fr; width: auto; padding: 9px 14px 12px; }
+      .matches-card .actions .ghost { grid-column: 1 / -1; }
+      .match-team { font-size: 10px; }
+      .card-title { font-size: 14px; }
+      .round-select { min-width: 130px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">⚽</span><span>BRASILEIRÃO <span style="color:var(--green)">SIMULADOR</span></span></div>
+      <span class="season">Série A · temporada atual</span>
+    </header>
+
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <div class="eyebrow">A temporada está nas suas mãos</div>
+        <h1 id="page-title">Simule o Brasileirão.</h1>
+        <p class="intro">Dê seus palpites, acompanhe a classificação e descubra como pode terminar a Série A.</p>
+      </div>
+      <div class="hero-note"><span class="live-dot" aria-hidden="true"></span> Resultados reais + simulação dos jogos restantes</div>
+    </section>
+
+    <div class="layout">
+      <section class="card table-card" aria-labelledby="table-title">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title" id="table-title">Tabela de classificação</h2>
+            <p class="card-subtitle" id="table-subtitle">Carregando resultados reais da temporada...</p>
+          </div>
+          <span class="eyebrow" style="letter-spacing:.08em">SÉRIE A</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption class="sr-only">Classificação do Campeonato Brasileiro Série A, com resultados reais e partidas simuladas</caption>
+            <thead>
+              <tr><th scope="col">#</th><th scope="col">Clube</th><th scope="col" title="Pontos">PTS</th><th scope="col" title="Jogos">J</th><th scope="col" title="Vitórias">V</th><th scope="col" title="Empates">E</th><th scope="col" title="Derrotas">D</th><th scope="col" title="Gols pró">GP</th><th scope="col" title="Gols contra">GC</th><th scope="col" title="Saldo de gols">SG</th></tr>
+            </thead>
+            <tbody id="standings"></tbody>
+          </table>
+        </div>
+        <div class="table-legend" aria-label="Legenda das zonas da tabela">
+          <span class="legend-item"><span class="legend-mark"></span> Libertadores</span>
+          <span class="legend-item"><span class="legend-mark sul"></span> Sul-Americana</span>
+          <span class="legend-item"><span class="legend-mark relegation"></span> Rebaixamento</span>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="card matches-card" aria-labelledby="matches-title">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title" id="matches-title">Confrontos do campeonato</h2>
+              <p class="card-subtitle">Resultados reais e partidas que ainda faltam.</p>
+            </div>
+            <label>
+              <span class="sr-only">Filtrar confrontos</span>
+              <select id="round-select" class="round-select"></select>
+            </label>
+          </div>
+          <div class="data-status" id="data-status" role="status" aria-live="polite">Buscando calendário e resultados...</div>
+          <div class="match-list" id="match-list"></div>
+          <div class="match-footer"><span id="round-progress">Aguardando dados</span><span>Mandante à esquerda</span></div>
+          <div class="actions">
+            <button type="button" class="button" id="simulate-round" disabled>✦ Simular seleção</button>
+            <button type="button" class="button secondary" id="simulate-all" disabled>Simular todas restantes</button>
+            <button type="button" class="button secondary" id="refresh-data">Atualizar resultados</button>
+            <button type="button" class="button ghost" id="reset" disabled>↺ Zerar palpites</button>
+          </div>
+          <p class="help">Partidas encerradas vêm do feed de resultados e não podem ser alteradas. Apenas jogos pendentes aceitam palpites. Fonte: <a class="source-link" href="https://www.espn.com.br/futebol/liga/_/nome/bra.1" target="_blank" rel="noopener noreferrer">ESPN</a>.</p>
+        </section>
+
+        <section class="summary" aria-label="Resumo da simulação">
+          <div class="stat"><span class="stat-label">Encerrados + palpites</span><span class="stat-value green" id="stat-played">—</span></div>
+          <div class="stat"><span class="stat-label">Líder</span><span class="stat-value" id="stat-leader">—</span></div>
+          <div class="stat"><span class="stat-label">Pontos do líder</span><span class="stat-value" id="stat-points">0 pts</span></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script>
+    const seasonYear = new Date().getFullYear();
+    const scoreApi = `https://site.api.espn.com/apis/site/v2/sports/soccer/bra.1/scoreboard?dates=${seasonYear}&limit=1000`;
+    let clubs = [];
+    let clubById = new Map();
+    let matches = [];
+    const predictions = new Map();
+    const standingsBody = document.getElementById("standings");
+    const roundSelect = document.getElementById("round-select");
+    const matchList = document.getElementById("match-list");
+    let activeFilter = "pending";
+    let toastTimer;
+
+    function getStandings() {
+      const rows = clubs.map(club => ({
+        ...club, points: 0, played: 0, wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0
+      }));
+      const byId = new Map(rows.map(row => [row.id, row]));
+      for (const match of matches) {
+        const result = match.completed ? match.result : predictions.get(match.id);
+        if (!isCompleteResult(result)) continue;
+        const home = byId.get(match.home);
+        const away = byId.get(match.away);
+        if (!home || !away) continue;
+        home.played++;
+        away.played++;
+        home.goalsFor += result.homeGoals;
+        home.goalsAgainst += result.awayGoals;
+        away.goalsFor += result.awayGoals;
+        away.goalsAgainst += result.homeGoals;
+        if (result.homeGoals > result.awayGoals) {
+          home.wins++; home.points += 3; away.losses++;
+        } else if (result.homeGoals < result.awayGoals) {
+          away.wins++; away.points += 3; home.losses++;
+        } else {
+          home.draws++; away.draws++; home.points++; away.points++;
+        }
+      }
+      return rows.sort((a, b) =>
+        b.points - a.points ||
+        b.wins - a.wins ||
+        (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst) ||
+        b.goalsFor - a.goalsFor ||
+        a.name.localeCompare(b.name, "pt-BR")
+      );
+    }
+
+    function renderStandings() {
+      const table = getStandings();
+      if (!clubs.length) {
+        standingsBody.innerHTML = "";
+        document.getElementById("stat-played").textContent = "—";
+        document.getElementById("stat-leader").textContent = "—";
+        document.getElementById("stat-points").textContent = "—";
+        return;
+      }
+      standingsBody.innerHTML = table.map((team, index) => {
+        const zone = index < 4 ? "zone-libertadores" : index < 12 ? "zone-sulamericana" : index >= 16 ? "zone-relegation" : "";
+        const goalDifference = team.goalsFor - team.goalsAgainst;
+        return `<tr class="${zone}${team.played ? " highlight" : ""}">
+          <td>${index + 1}</td>
+          <td><span class="team-cell"><span class="team-badge" aria-hidden="true">${escapeHtml(team.badge)}</span>${escapeHtml(team.name)}</span></td>
+          <td class="points">${team.points}</td><td>${team.played}</td><td>${team.wins}</td>
+          <td>${team.draws}</td><td>${team.losses}</td><td>${team.goalsFor}</td>
+          <td>${team.goalsAgainst}</td><td>${goalDifference > 0 ? "+" : ""}${goalDifference}</td>
+        </tr>`;
+      }).join("");
+
+      const completed = matches.filter(match => match.completed).length;
+      const predicted = matches.filter(match => !match.completed && isCompleteResult(predictions.get(match.id))).length;
+      const included = completed + predicted;
+      document.getElementById("stat-played").textContent = `${included} / ${matches.length}`;
+      document.getElementById("stat-leader").textContent = included ? table[0].name : "—";
+      document.getElementById("stat-points").textContent = `${included ? table[0].points : 0} pts`;
+      document.getElementById("table-subtitle").textContent =
+        `${completed} resultados reais${predicted ? ` + ${predicted} ${predicted === 1 ? "palpite" : "palpites"}` : ""} · classificação recalculada automaticamente`;
+    }
+
+    function isCompleteResult(result) {
+      return result && Number.isInteger(result.homeGoals) && Number.isInteger(result.awayGoals);
+    }
+
+    function isPending(match) {
+      return !match.completed && (match.state === "pre" || match.reschedulePending);
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, character => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[character]);
+    }
+
+    function getDateKey(value) {
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit"
+      }).formatToParts(new Date(value));
+      const part = type => parts.find(item => item.type === type).value;
+      return `${part("year")}-${part("month")}-${part("day")}`;
+    }
+
+    function formatDate(dateKey, options = { weekday: "short", day: "2-digit", month: "short" }) {
+      return new Intl.DateTimeFormat("pt-BR", { ...options, timeZone: "America/Sao_Paulo" })
+        .format(new Date(`${dateKey}T12:00:00-03:00`));
+    }
+
+    function getVisibleMatches() {
+      if (activeFilter === "pending") return matches.filter(isPending);
+      if (activeFilter === "all") return matches;
+      return matches.filter(match => match.dateKey === activeFilter);
+    }
+
+    function getProgressText(visibleMatches) {
+      const postponed = visibleMatches.filter(match => match.reschedulePending).length;
+      const pending = visibleMatches.filter(isPending).length - postponed;
+      const predicted = visibleMatches.filter(match => isCompleteResult(predictions.get(match.id))).length;
+      return `${predicted} palpites · ${pending} pendentes${postponed ? ` · ${postponed} adiada` : ""}`;
+    }
+
+    function renderMatches() {
+      const visibleMatches = getVisibleMatches();
+      matchList.innerHTML = visibleMatches.map((match, index) => {
+        const home = clubById.get(match.home);
+        const away = clubById.get(match.away);
+        const result = match.completed ? match.result : predictions.get(match.id);
+        let scoreHtml;
+        if (match.completed) {
+          scoreHtml = `<span class="score">${result.homeGoals} <span class="score-divider">×</span> ${result.awayGoals}</span>`;
+        } else if (match.state === "in") {
+          scoreHtml = `<span class="score">${result ? `${result.homeGoals} × ${result.awayGoals}` : "AO VIVO"}</span>`;
+        } else if (isPending(match)) {
+          scoreHtml = `<div class="score">
+            <label><span class="sr-only">Palpite de gols do ${escapeHtml(home.name)}</span><input type="number" min="0" max="99" step="1" inputmode="numeric" data-match="${match.id}" data-side="home" value="${result ? result.homeGoals : ""}" placeholder="–"></label>
+            <span class="score-divider">×</span>
+            <label><span class="sr-only">Palpite de gols do ${escapeHtml(away.name)}</span><input type="number" min="0" max="99" step="1" inputmode="numeric" data-match="${match.id}" data-side="away" value="${result ? result.awayGoals : ""}" placeholder="–"></label>
+          </div>`;
+        } else {
+          scoreHtml = `<span class="score">${result ? `${result.homeGoals} × ${result.awayGoals}` : "—"}</span>`;
+        }
+        const needsDate = index === 0 || visibleMatches[index - 1].dateKey !== match.dateKey;
+        const statusLabel = match.completed ? "Resultado real" : match.reschedulePending ? "Adiado · aguardando nova data" : match.state === "post" ? "Resultado indisponível" : match.state === "in" ? "Em andamento" : isCompleteResult(predictions.get(match.id)) ? "Seu palpite" : predictions.has(match.id) ? "Palpite incompleto" : match.state === "pre" ? "Pendente" : "Sem horário";
+        return `<div class="match${match.completed ? " is-played" : match.state === "in" ? " is-live" : ""}">
+          ${needsDate ? `<span class="match-date">${match.reschedulePending ? "Adiado · nova data a definir" : formatDate(match.dateKey)}</span>` : ""}
+          <span class="match-team" title="${escapeHtml(home.name)}">${escapeHtml(home.name)}</span>
+          ${scoreHtml}
+          <span class="match-team away" title="${escapeHtml(away.name)}">${escapeHtml(away.name)}</span>
+          <span class="match-tag">${statusLabel}</span>
+        </div>`;
+      }).join("");
+      if (!visibleMatches.length) {
+        matchList.innerHTML = '<p class="help">Não há partidas para mostrar nesta seleção.</p>';
+      }
+      const pending = visibleMatches.filter(isPending).length;
+      document.getElementById("round-progress").textContent = getProgressText(visibleMatches);
+      const simulateButton = document.getElementById("simulate-round");
+      simulateButton.disabled = pending === 0;
+      simulateButton.textContent = activeFilter === "pending"
+        ? "✦ Simular pendentes"
+        : activeFilter === "all" ? "✦ Simular todas exibidas" : "✦ Simular esta data";
+      document.getElementById("simulate-all").disabled = matches.every(match => !isPending(match));
+      document.getElementById("reset").disabled = predictions.size === 0;
+    }
+
+    function populateFilters() {
+      const dateKeys = [...new Set(matches.map(match => match.dateKey))].sort();
+      roundSelect.innerHTML = [
+        '<option value="pending">Todas as partidas pendentes</option>',
+        '<option value="all">Todos os confrontos da temporada</option>',
+        ...dateKeys.map(dateKey => `<option value="${dateKey}">${formatDate(dateKey, { day: "2-digit", month: "long", year: "numeric" })}</option>`)
+      ].join("");
+      roundSelect.value = activeFilter;
+    }
+
+    function updateStandingsFromInput(event) {
+      const input = event.target;
+      if (!(input instanceof HTMLInputElement) || !input.matches("[data-match]")) return;
+      const id = input.dataset.match;
+      const existing = predictions.get(id) || {};
+      if (input.value === "") delete existing[input.dataset.side === "home" ? "homeGoals" : "awayGoals"];
+      else {
+        const score = Number(input.value);
+        if (!Number.isInteger(score) || score < 0 || score > 99) {
+          predictions.delete(id);
+          renderStandings();
+          renderMatches();
+          return;
+        }
+        existing[input.dataset.side === "home" ? "homeGoals" : "awayGoals"] = score;
+      }
+      if (Number.isInteger(existing.homeGoals) || Number.isInteger(existing.awayGoals)) predictions.set(id, existing);
+      else predictions.delete(id);
+      renderStandings();
+      document.getElementById("round-progress").textContent = getProgressText(getVisibleMatches());
+      document.getElementById("reset").disabled = predictions.size === 0;
+    }
+
+    function randomGoals() {
+      const value = Math.random();
+      if (value < 0.18) return 0;
+      if (value < 0.48) return 1;
+      if (value < 0.73) return 2;
+      if (value < 0.88) return 3;
+      if (value < 0.96) return 4;
+      return 5;
+    }
+
+    function simulateMatches(matchesToSimulate) {
+      const pending = matchesToSimulate.filter(isPending);
+      if (!pending.length) {
+        showToast("Não há partidas pendentes nesta seleção.");
+        return;
+      }
+      pending.forEach(match => {
+        predictions.set(match.id, { homeGoals: randomGoals(), awayGoals: randomGoals() });
+      });
+      renderMatches();
+      renderStandings();
+      showToast(`${pending.length} ${pending.length === 1 ? "partida simulada" : "partidas simuladas"}.`);
+    }
+
+    async function loadSeason() {
+      const status = document.getElementById("data-status");
+      const refreshButton = document.getElementById("refresh-data");
+      status.classList.remove("error");
+      status.textContent = `Buscando resultados reais do Brasileirão ${seasonYear}...`;
+      refreshButton.disabled = true;
+      try {
+        const response = await fetch(scoreApi, { cache: "no-store" });
+        if (!response.ok) throw new Error(`O provedor respondeu HTTP ${response.status}.`);
+        const data = await response.json();
+        if (!Array.isArray(data.events) || data.events.length === 0) {
+          throw new Error("O provedor não retornou partidas para esta temporada.");
+        }
+        const teams = new Map();
+        const nextMatches = data.events.map(event => {
+          const competition = event.competitions && event.competitions[0];
+          if (!competition || !Array.isArray(competition.competitors)) return null;
+          const home = competition.competitors.find(team => team.homeAway === "home");
+          const away = competition.competitors.find(team => team.homeAway === "away");
+          if (!home || !away || !home.team || !away.team) return null;
+          for (const competitor of [home, away]) {
+            const name = competitor.team.displayName || competitor.team.name;
+            teams.set(String(competitor.team.id), {
+              id: String(competitor.team.id),
+              name,
+              badge: competitor.team.abbreviation || (competitor.team.shortDisplayName || name).slice(0, 3).toUpperCase()
+            });
+          }
+          const statusType = competition.status && competition.status.type;
+          const state = statusType && statusType.state;
+          const completed = Boolean(statusType && statusType.completed);
+          const homeGoals = Number.parseInt(home.score, 10);
+          const awayGoals = Number.parseInt(away.score, 10);
+          const hasScore = String(home.score).trim() !== "" && String(away.score).trim() !== "";
+          const result = completed && hasScore && Number.isInteger(homeGoals) && Number.isInteger(awayGoals)
+            ? { homeGoals, awayGoals }
+            : null;
+          return {
+            id: String(event.id),
+            date: event.date,
+            dateKey: getDateKey(event.date),
+            home: String(home.team.id),
+            away: String(away.team.id),
+            state,
+            postponed: Boolean(statusType && statusType.name === "STATUS_POSTPONED"),
+            completed: completed && result !== null,
+            result
+          };
+        }).filter(Boolean);
+        if (nextMatches.length === 0 || teams.size < 2) {
+          throw new Error("O calendário recebido não contém confrontos válidos.");
+        }
+        const scheduledPairs = new Set(nextMatches
+          .filter(match => !match.postponed)
+          .map(match => `${match.home}>${match.away}`));
+        const activeMatches = nextMatches
+          .filter(match => !match.postponed || !scheduledPairs.has(`${match.home}>${match.away}`))
+          .map(match => ({ ...match, reschedulePending: match.postponed }))
+          .sort((a, b) => {
+            if (a.reschedulePending !== b.reschedulePending) return a.reschedulePending ? 1 : -1;
+            return new Date(a.date) - new Date(b.date);
+          });
+        clubs = [...teams.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+        clubById = new Map(clubs.map(club => [club.id, club]));
+        const upcomingIds = new Set(activeMatches.filter(isPending).map(match => match.id));
+        for (const id of predictions.keys()) {
+          if (!upcomingIds.has(id)) predictions.delete(id);
+        }
+        matches = activeMatches;
+        document.querySelector(".season").textContent = `Série A · Temporada ${seasonYear}`;
+        document.getElementById("table-title").textContent = "Classificação da temporada";
+        const completedCount = matches.filter(match => match.completed).length;
+        const pendingCount = matches.filter(isPending).length;
+        const postponedCount = matches.filter(match => match.reschedulePending).length;
+        const missingResultsCount = matches.filter(match =>
+          !match.completed && match.state === "post" && !match.reschedulePending
+        ).length;
+        const repeatedPairs = new Set();
+        const pairCounts = new Map();
+        for (const match of matches) {
+          const pair = `${match.home}>${match.away}`;
+          pairCounts.set(pair, (pairCounts.get(pair) || 0) + 1);
+        }
+        for (const [pair, count] of pairCounts) {
+          if (count > 1) repeatedPairs.add(pair);
+        }
+        const feedWarning = matches.length !== 380 || repeatedPairs.size
+          ? ` Atenção: o feed contém ${matches.length} jogos e ${repeatedPairs.size} confrontos repetidos na mesma direção; confira a fonte.`
+          : "";
+        status.classList.remove("error");
+        status.innerHTML = `${completedCount} resultados reais · ${pendingCount - postponedCount} partidas pendentes · ${postponedCount} adiadas sem nova data${missingResultsCount ? ` · ${missingResultsCount} encerradas sem placar` : ""} · <a class="source-link" href="https://www.espn.com.br/futebol/liga/_/nome/bra.1" target="_blank" rel="noopener noreferrer">Fonte: ESPN</a>${escapeHtml(feedWarning)}`;
+        populateFilters();
+        renderMatches();
+        renderStandings();
+      } catch (error) {
+        status.classList.add("error");
+        status.textContent = `Não foi possível carregar os dados reais: ${error.message} Verifique sua conexão e tente atualizar.`;
+        document.getElementById("table-subtitle").textContent = "A classificação depende dos dados atuais do provedor.";
+        document.getElementById("round-progress").textContent = "Dados indisponíveis";
+        document.getElementById("simulate-round").disabled = true;
+        document.getElementById("simulate-all").disabled = true;
+        throw error;
+      } finally {
+        refreshButton.disabled = false;
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.hidden = true; }, 2600);
+    }
+
+    roundSelect.addEventListener("change", () => {
+      activeFilter = roundSelect.value;
+      renderMatches();
+    });
+    matchList.addEventListener("input", updateStandingsFromInput);
+    document.getElementById("simulate-round").addEventListener("click", () => simulateMatches(getVisibleMatches()));
+    document.getElementById("simulate-all").addEventListener("click", () => simulateMatches(matches));
+    document.getElementById("reset").addEventListener("click", () => {
+      if (predictions.size === 0) return;
+      predictions.clear();
+      renderMatches();
+      renderStandings();
+      showToast("Palpites removidos. Os resultados reais foram mantidos.");
+    });
+
+    document.getElementById("refresh-data").addEventListener("click", () => {
+      loadSeason().catch(error => console.error("Falha ao atualizar os dados do Brasileirão:", error));
+    });
+    document.getElementById("simulate-round").disabled = true;
+    document.getElementById("simulate-all").disabled = true;
+    loadSeason().catch(error => console.error("Falha ao carregar os dados do Brasileirão:", error));
+  </script>
+</body>
+</html>
