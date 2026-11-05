@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Bloqueia push para main sem aprovação (exame 5/5) para o commit exato.
+root=$(git rev-parse --show-toplevel)
+while read -r lref lsha rref rsha; do
+  [ "$rref" = "refs/heads/main" ] || continue
+  case "$lsha" in 0000000000000000000000000000000000000000) echo "pre-push: apagar main é bloqueado."; exit 1 ;; esac
+  if [ ! -f "$root/.claude/approvals/$lsha" ]; then
+    echo "pre-push: $lsha não tem exame aprovado (.claude/approvals/$lsha). Push para main bloqueado."
+    exit 1
+  fi
+done
+exit 0
