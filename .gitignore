@@ -1,0 +1,4 @@
+.claude/reports/
+.claude/approvals/
+node_modules/
+dist/
