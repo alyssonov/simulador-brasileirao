@@ -32,7 +32,8 @@ Os agentes escrevem a maior parte do código, mas o usuário responde por cada
 mudança publicada. Seu papel é mantê-lo pensando, não pensar por ele: ele precisa
 conseguir explicar e defender cada linha antes de ela sair.
 
-Setup do clone (uma vez, feito pelo usuário): `git config core.hooksPath .githooks`
+O hook SessionStart (`.claude/hooks/session-start.sh`) ativa `core.hooksPath .githooks`
+em toda sessão. Fora do Claude Code, rode esse comando uma vez no clone.
 Checagem definida deste repositório: `scripts/check.sh` (grava o relatório em
 `.claude/reports/<tree>.txt`). Requer Node e Playwright.
 
