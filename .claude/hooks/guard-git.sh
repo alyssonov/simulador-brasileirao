@@ -13,7 +13,7 @@ case "$tool" in
   Bash)
     cmd=$(jq -r '.tool_input.command // ""' <<<"$input")
     case "$cmd" in *--no-verify*) deny "--no-verify é proibido nesta sessão." ;; esac
-    grep -Eq 'git[^|;&]*[[:space:]]commit[^|;&]*[[:space:]]-[a-zA-Z]*n([[:space:]]|$)' <<<"$cmd" && deny "git commit -n pula hooks; proibido."
+    grep -Eq 'git[^|;&]*[[:space:]]commit[^|;&]*[[:space:]]-[a-zA-Z]*n[a-zA-Z]*([[:space:]]|$)' <<<"$cmd" && deny "git commit -n pula hooks; proibido."
     grep -Eq 'hooksPath|HUSKY=0|SKIP_HOOKS|GIT_CONFIG|git[[:space:]]+-c[[:space:]]|\.githooks' <<<"$cmd" && deny "Alterar ou desligar hooks é proibido nesta sessão."
     grep -Eq 'gh[[:space:]]+(pr[[:space:]]+merge|api)' <<<"$cmd" && deny "Merge/API do GitHub pelo gh é proibido nesta sessão. Peça ao usuário."
     if grep -Eq 'approvals|approve\.sh' <<<"$cmd"; then
